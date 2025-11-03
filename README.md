@@ -25,6 +25,5 @@ The application is a single-page, dark-mode dashboard (`index.html`) featuring:
 
 -----
 
-
-
-$$\text{[https://quay.io/repository/umaaditya7809/crypto-streamer]
+Cointainer image link:-
+ https://quay.io/repository/umaaditya7809/crypto-streamer
