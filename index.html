@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Streamer Dashboard</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Apply Inter font and smooth scroll */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0d1117; /* Dark background */
+            color: #c9d1d9; /* Light text */
+            transition: all 0.3s ease;
+        }
+        /* Custom scrollbar for a sleek look */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #161b22;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #30363d;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #484f58;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 sm:p-6">
+
+    <header class="mb-8 text-center">
+        <h1 class="text-4xl sm:text-5xl font-extrabold text-green-400 tracking-tight">
+            Crypto Streamer Live Dashboard
+        </h1>
+        <p class="text-md sm:text-lg mt-2 text-gray-400">
+            Real-Time Simulated Price Feed (Containerized Project)
+        </p>
+    </header>
+
+    <div id="status" class="mb-6 p-3 text-center rounded-lg font-medium bg-yellow-900 text-yellow-300">
+        Status: <span id="status-text">Connecting...</span>
+    </div>
+
+    <!-- Main Content Grid - Responsive layout -->
+    <!-- Grid changes from 1 column (mobile) to 2 columns (small/tablet) to 3 columns (large) -->
+    <div id="crypto-grid" class="grid gap-6 
+        grid-cols-1 
+        sm:grid-cols-2 
+        lg:grid-cols-3">
+        <!-- Crypto cards will be inserted here by JavaScript -->
+    </div>
+
+    <footer class="mt-12 pt-6 border-t border-gray-700 text-center text-sm text-gray-500">
+        <p>21CSE216P - Linux and Container Technologies Project. Served by Nginx in a Podman container.</p>
+        <p id="time-display" class="mt-1">Last Update: --:--:--</p>
+    </footer>
+
+    <script>
+        // List of cryptocurrencies to display
+        const CRYPTOS = ['BTC', 'ETH', 'ADA', 'XRP', 'DOGE', 'SOL', 'DOT', 'LTC', 'LINK'];
+        const INTERVAL_MS = 2000; // Update every 2 seconds
+
+        // Storage for current prices and previous prices for comparison
+        let priceData = {};
+        let previousPrices = {};
+
+        // --- Core Simulation Logic ---
+
+        // Function to generate a new simulated price movement
+        function generateNewPrice(symbol) {
+            let currentPrice = priceData[symbol] || (Math.random() * 1000) + 10; // Initial seed price
+            let changeFactor = (Math.random() - 0.5) * 0.02; // Change between -1% and +1%
+            
+            // Apply change and ensure price stays positive
+            let newPrice = currentPrice * (1 + changeFactor);
+            newPrice = Math.max(0.01, newPrice); 
+
+            // Calculate 24h change (simulated based on the last price change)
+            let change24h = (Math.random() - 0.5) * 5; // Simulates a percentage change
+
+            return {
+                price: newPrice,
+                change24h: change24h,
+                marketCap: newPrice * 1000000000 // Mock Market Cap
+            };
+        }
+
+        // --- Rendering Logic ---
+
+        // Helper function to format currency
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: value >= 1000 ? 0 : 2
+            }).format(value);
+        }
+        
+        // Helper function to format percentage
+        function formatPercent(value) {
+            return `${value.toFixed(2)}%`;
+        }
+
+        // Creates or updates a single crypto card in the DOM
+        function updateCard(symbol, price, change24h, marketCap) {
+            const id = `card-${symbol}`;
+            let card = document.getElementById(id);
+            const isInitial = !card;
+            
+            // Check price movement for color change
+            const isUp = price > previousPrices[symbol];
+            const isDown = price < previousPrices[symbol];
+            
+            const priceColorClass = isUp ? 'text-green-400' : (isDown ? 'text-red-400' : 'text-gray-400');
+            const changeColorClass = change24h >= 0 ? 'text-green-400 bg-green-900/30' : 'text-red-400 bg-red-900/30';
+
+            // Create the card if it doesn't exist
+            if (isInitial) {
+                card = document.createElement('div');
+                card.id = id;
+                card.className = 'bg-[#161b22] p-4 sm:p-6 rounded-xl shadow-lg border border-gray-800 hover:border-green-500 transition-all duration-300 transform hover:-translate-y-1';
+                card.innerHTML = `
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-2xl font-bold">${symbol}</h2>
+                        <span id="${id}-change" class="text-sm font-medium px-2 py-1 rounded-full ${changeColorClass}">${formatPercent(change24h)}</span>
+                    </div>
+                    <div class="text-3xl font-extrabold ${priceColorClass} mb-2" id="${id}-price">${formatCurrency(price)}</div>
+                    <div class="text-sm text-gray-500">Market Cap: <span id="${id}-cap" class="text-gray-400">${formatCurrency(marketCap / 1000000)}M</span></div>
+                `;
+                document.getElementById('crypto-grid').appendChild(card);
+            } else {
+                // Update existing card data
+                document.getElementById(`${id}-price`).textContent = formatCurrency(price);
+                document.getElementById(`${id}-price`).className = `text-3xl font-extrabold mb-2 ${priceColorClass} transition-colors duration-500`;
+
+                const changeSpan = document.getElementById(`${id}-change`);
+                changeSpan.textContent = formatPercent(change24h);
+                changeSpan.className = `text-sm font-medium px-2 py-1 rounded-full ${change24h >= 0 ? 'text-green-400 bg-green-900/30' : 'text-red-400 bg-red-900/30'}`;
+
+                document.getElementById(`${id}-cap`).textContent = formatCurrency(marketCap / 1000000) + 'M';
+            }
+            
+            // Temporary flash for price update
+            if (isUp || isDown) {
+                card.classList.add('ring-2', isUp ? 'ring-green-500' : 'ring-red-500');
+                setTimeout(() => {
+                    card.classList.remove('ring-2', 'ring-green-500', 'ring-red-500');
+                }, 300);
+            }
+            
+            previousPrices[symbol] = price;
+        }
+
+        // --- Main Update Loop ---
+
+        function simulateAndUpdate() {
+            // Store current prices as previous for comparison in the next cycle
+            previousPrices = { ...priceData };
+
+            // 1. Generate new prices for all symbols
+            CRYPTOS.forEach(symbol => {
+                const { price, change24h, marketCap } = generateNewPrice(symbol);
+                priceData[symbol] = price;
+                updateCard(symbol, price, change24h, marketCap);
+            });
+
+            // 2. Update status and time
+            document.getElementById('status-text').textContent = 'Live Feed Active (Simulated)';
+            document.getElementById('status').classList.remove('bg-yellow-900', 'text-yellow-300');
+            document.getElementById('status').classList.add('bg-green-900', 'text-green-300');
+            
+            document.getElementById('time-display').textContent = `Last Update: ${new Date().toLocaleTimeString()}`;
+
+            // 3. Schedule the next update
+            setTimeout(simulateAndUpdate, INTERVAL_MS);
+        }
+
+        // --- Initialization ---
+        window.onload = function() {
+            // Initialize all prices to a starting value before the first loop starts
+            CRYPTOS.forEach(symbol => {
+                const initial = generateNewPrice(symbol);
+                priceData[symbol] = initial.price;
+                previousPrices[symbol] = initial.price; // Start comparison from the same point
+            });
+
+            simulateAndUpdate(); // Start the main simulation loop
+        }
+    </script>
+</body>
+</html>
