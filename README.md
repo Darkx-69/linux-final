@@ -1,4 +1,4 @@
-# 21CSE216P - Live Crypto Streamer (Containerized with Podman)
+#  Live Crypto Streamer (Containerized with Podman)
 
 This project demonstrates core concepts of Linux and Container Technologies by deploying a simple, responsive web application as a container image using **Podman** on a RHEL-based environment.
 
@@ -23,7 +23,7 @@ The application is a single-page, dark-mode dashboard (`index.html`) featuring:
 * Fully responsive design using Tailwind CSS for optimal viewing on mobile, tablet, and desktop devices.
 * Data is updated every 2 seconds.
 
------
+----- n 
 
 Cointainer image link:-
  https://quay.io/repository/umaaditya7809/crypto-streamer
